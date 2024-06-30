@@ -2,6 +2,8 @@ from dotenv import load_dotenv
 from openai import OpenAI
 from elevenlabs.client import ElevenLabs
 from elevenlabs import play
+from elevenlabs import Voice
+from elevenlabs import VoiceSettings
 
 import speech_recognition as sr
 
@@ -56,11 +58,15 @@ def AI_Assistant(input):
     system_data.append({"role": "assistant", "content": assistant_response})
 
     # Print the assistant's response.
+    print(assistant_response)
     audio = client2.generate(
         text = assistant_response,
-        voice = "Pe3wyeqR0uxsfAqSJXXf",
+        voice = Voice (
+            voice_id = 'Pe3wyeqR0uxsfAqSJXXf',
+            settings = VoiceSettings(stability = 0.80, similarity_boost = 0.39, style = 0.89, use_speaker_boost = True),
+        ),
         model = "eleven_multilingual_v2"
-    )   
+        )   
     play(audio)
 
 
@@ -96,7 +102,7 @@ def extract_features(file_path):
 
 
 # Example dataset with your voice samples and samples from other people
-X_my_voice = np.array([extract_features(file) for file in ['my_voice.wav', 'my_voice2.wav', 'my_voice3.wav', 'my_voice4.wav', 'my_voice5.wav', 'my_voice6.wav', 'my_voice7.wav', 'my_voice8.wav', 'my_voice9.wav', 'my_voice10.wav', 'my_voice11.wav', 'my_voice12.wav']])
+X_my_voice = np.array([extract_features(file) for file in ['my_voice.wav', 'my_voice2.wav', 'my_voice3.wav', 'my_voice4.wav', 'my_voice5.wav', 'my_voice6.wav', 'my_voice7.wav', 'my_voice8.wav', 'my_voice9.wav', 'my_voice10.wav', 'my_voice11.wav', 'my_voice12.wav', 'my_voice13.wav']])
 X_other_voice = np.array([extract_features(file) for file in ['other_voice1.wav', 'other_voice2.wav', 'other_voice3.wav', 'other_voice4.wav', 'other_voice5.wav', 'other_voice6.wav', 'other_voice7.wav', 'other_voice8.wav']])
 
 # Labels
@@ -151,7 +157,15 @@ def PredictThis():
     #elif predicted_label == 'other_voice' and not confidence == 1.0:
     #    Speech()
     else:
-        ("Other voice or too low of confidence")
+        audio2 = client2.generate(
+        text = os.getenv('denied'),
+        voice = Voice (
+            voice_id = 'Pe3wyeqR0uxsfAqSJXXf',
+            settings = VoiceSettings(stability = 0.80, similarity_boost = 0.39, style = 0.89, use_speaker_boost = True),
+        ),
+        model = "eleven_multilingual_v2"
+        )   
+    play(audio2)
 
 
 class VoiceRecorder:
