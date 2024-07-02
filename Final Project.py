@@ -4,6 +4,7 @@ from elevenlabs.client import ElevenLabs
 from elevenlabs import play
 from elevenlabs import Voice
 from elevenlabs import VoiceSettings
+import transcribe
 
 import speech_recognition as sr
 
@@ -40,7 +41,7 @@ def configure():
 
 configure()
 
-def AI_Assistant(input):
+def AI_Assistant(input, self):
     system_data = [
         {"role": "system", "content": os.getenv('instructions')},
         {"role": "user", "content": input}
@@ -70,8 +71,10 @@ def AI_Assistant(input):
         )   
     play(audio)
 
+    threading.Thread(target = VoiceRecorder.look_for_word(self)).start()
+
 class Speech:
-    def __init__(self):
+    def initialize(self):
         # Initialize the recognizer
         recognizer = sr.Recognizer()
 
@@ -87,7 +90,7 @@ class Speech:
                 # Recognize the speech
                 text = recognizer.recognize_google(audio_data)
                 print("Recognized speech: ", text)
-                AI_Assistant(text)
+                AI_Assistant(text, self)
             except sr.UnknownValueError:
                 print("Speech recognition could not understand the audio.")
             except sr.RequestError as e:
@@ -128,10 +131,10 @@ def predict_voice(file_path):
     return predicted_label[0], confidence
 
 
-def PredictThis():
+def PredictThis(self):
     predicted_label, confidence = predict_voice('new_voice_sample.wav')
     if predicted_label == 'my_voice' and confidence > 0.95:  # Adjust confidence threshold as needed
-        Speech()
+        Speech.initialize(self)
     #elif predicted_label == 'other_voice' and not confidence == 1.0:
     #    Speech()
     else:
@@ -143,8 +146,8 @@ def PredictThis():
         ),
         model = "eleven_multilingual_v2"
         )   
-    play(audio2)
-
+        play(audio2)
+        threading.Thread(target = VoiceRecorder.look_for_word(self)).start()
 
 class VoiceRecorder:
     def __init__(self):
@@ -156,6 +159,11 @@ class VoiceRecorder:
         self.label = tk.Label(text="00:00:00", font=("Arial", 24, "bold"))
         self.label.pack()
         self.recording = False
+
+        self.is_looking = True
+        self.recognizer = sr.Recognizer()
+        threading.Thread(target = self.look_for_word).start()
+
         self.root.mainloop()
 
     def click_handler(self):
@@ -206,8 +214,34 @@ class VoiceRecorder:
         sound_file.close()
 
         # Perform voice prediction and action
-        PredictThis()
+        PredictThis(self)
 
+    def look_for_word(self):
+        self.is_looking = True
+        while self.is_looking:
+            print ("running")
+            mythread = threading.enumerate()
+            print (mythread)
+            try:
+                with sr.Microphone() as mic:
+                    self.recognizer.adjust_for_ambient_noise(mic, duration = 0.2)
+                    print ("listening1...")
+                    audio = self.recognizer.listen(mic)
+                    print ("listening2...")
+
+                    text = self.recognizer.recognize_google(audio)
+                    print ("transcribing...")
+                    text = text.lower()
+
+                    if os.getenv('activation_word').lower().strip() in text:
+                        print("detected")
+                        self.button.config(fg="red")
+                        self.recording = True
+                        self.is_looking = False
+                        threading.Thread(target=self.record).start()
+                        self.root.mainloop()
+            except:
+                continue
 
 # Initialize voice recorder
 VoiceRecorder()
