@@ -1,3 +1,4 @@
+import sys
 from dotenv import load_dotenv
 from openai import OpenAI
 from elevenlabs.client import ElevenLabs
@@ -26,24 +27,27 @@ from sklearn.preprocessing import LabelEncoder
 import librosa
 import numpy as np
 
-# Define GPT-3.5 API key
+exe_file = sys.executable
+exe_parent = os.path.dirname(exe_file)
+dotenv_path = os.path.join(exe_parent, ".env")
+
+load_dotenv(dotenv_path)
+
+ #Define GPT-3.5 API key
 client = OpenAI(
-    api_key = os.getenv('openai_api_key')
+    api_key = os.environ.get('openai_api_key')
 )
 
-# Define Elevenlabs API Key
+ #Define Elevenlabs API Key
 client2 = ElevenLabs(
-  api_key = os.getenv('elevenlabs_api_key') # Defaults to ELEVEN_API_KEY
+  api_key = os.environ.get('elevenlabs_api_key') # Defaults to ELEVEN_API_KEY
 )
 
-def configure():
-    load_dotenv()
-
-configure()
+#configure()
 
 def AI_Assistant(input, self):
     system_data = [
-        {"role": "system", "content": os.getenv('instructions')},
+        {"role": "system", "content": os.environ.get('instructions')},
         {"role": "user", "content": input}
     ]
 
@@ -139,7 +143,7 @@ def PredictThis(self):
     #    Speech()
     else:
         audio2 = client2.generate(
-        text = os.getenv('denied'),
+        text = os.environ.get('denied'),
         voice = Voice (
             voice_id = 'Pe3wyeqR0uxsfAqSJXXf',
             settings = VoiceSettings(stability = 0.80, similarity_boost = 0.39, style = 0.89, use_speaker_boost = True),
@@ -172,6 +176,7 @@ class VoiceRecorder:
             self.button.config(fg="black")
         else:
             self.recording = True
+            self.is_looking = False
             self.button.config(fg="red")
             threading.Thread(target=self.record).start()
 
@@ -233,7 +238,7 @@ class VoiceRecorder:
                     print ("transcribing...")
                     text = text.lower()
 
-                    if os.getenv('activation_word').lower().strip() in text:
+                    if os.environ.get('activation_word').lower().strip() in text:
                         print("detected")
                         self.button.config(fg="red")
                         self.recording = True
